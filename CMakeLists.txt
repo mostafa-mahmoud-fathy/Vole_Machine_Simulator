@@ -7,4 +7,5 @@ include_directories(.)
 
 add_executable(Vole_Machine_Simulator
         A1_T4_19_20231244_20231085_20230103.cpp
-        A1_T4_19_20231244_20231085_20230103.h)
+        A1_T4_19_20231244_20231085_20230103.h
+        main.cpp)
