@@ -64,3 +64,148 @@ void Registers::printRegisters() {
     }
     cout << endl;
 }
+// CPU class implementation
+string CPU:: hexString(int value) const {
+    if(value < 0){
+        value += 256 ;
+    }
+    value %= 256;  // Ensure within one byte (0-255)
+    int highDigit = value / 16;
+    int lowDigit = value % 16;
+
+    // Convert each nibble to its hex character using static_cast
+    char highChar = highDigit < 10 ? static_cast<char>('0' + highDigit) : static_cast<char>('A' + highDigit - 10);
+    char lowChar = lowDigit < 10 ? static_cast<char>('0' + lowDigit) : static_cast<char>('A' + lowDigit - 10);
+
+    return string{highChar, lowChar};
+}
+
+// Helper to convert hex string to int
+int CPU :: hexToInt(const string& hexValue) const {
+    int temp = stoi(hexValue, nullptr, 16);
+    if (temp >= 128){
+        temp -= 256 ;
+    }
+    return  temp ;
+}
+double CPU :: hexToFloatValue(const string& hexInput) {
+    // Convert each hex character to binary
+    string binary;
+    for (char hexChar : hexInput) {
+        int decimal = isdigit(hexChar) ? hexChar - '0' : toupper(hexChar) - 'A' + 10;
+        binary += bitset<4>(decimal).to_string();
+    }
+
+    // Determine sign, exponent, and mantissa
+    int sign = binary[0] - '0';
+    string exponent = binary.substr(1, 3);
+    string mantissa = binary.substr(4, 4);
+
+    // Normalize mantissa by removing trailing zeros and adding "0."
+    while (mantissa.back() == '0') mantissa.pop_back();
+    mantissa = "0." + mantissa;
+
+    // Convert normalized binary mantissa to decimal
+    double decimalMantissa = 0;
+    double fracWeight = 0.5;
+    for (size_t i = 2; i < mantissa.size(); ++i) {
+        if (mantissa[i] == '1') decimalMantissa += fracWeight;
+        fracWeight /= 2;
+    }
+
+    int exponentDecimal = stoi(exponent, nullptr, 2) - 4;
+    double finalDecimalValue = decimalMantissa * pow(2, exponentDecimal);
+
+    return (sign ? -finalDecimalValue : finalDecimalValue);
+}
+string CPU :: FloatToHexadecimal(double number) {
+
+    string signBit = (number < 0) ? "1" : "0";
+    number = fabs(number);
+
+    int exponent = 0;
+    while (number >= 1) {
+        number /= 2;
+        exponent++;
+    }
+
+    while (number < 0.5 && number != 0) {
+        number *= 2;
+        exponent--;
+    }
+
+    int biasedExponent = exponent + 4;
+
+    string exponentBinary = bitset<3>(biasedExponent).to_string();
+
+    string mantissaBinary;
+    for (int i = 0; i < 4; ++i) {
+        number *= 2;
+        if (number >= 1) {
+            mantissaBinary += "1";
+            number -= 1;
+        } else {
+            mantissaBinary += "0";
+        }
+    }
+
+    string finalBinary = signBit + exponentBinary + mantissaBinary;
+    stringstream hexStream;
+    hexStream << uppercase << hex << stoi(finalBinary, nullptr, 2);
+    return hexStream.str();
+}
+CPU::CPU(Memory &mem, Registers &regs, int &pc, bool &halted)
+        : memory(mem), registers(regs), pc(pc), halted(halted), instReg("0000") {}
+
+void CPU::fetchInstruction() {
+    instReg = memory.load(pc) + memory.load(pc + 1);
+}
+
+void CPU::executeInstruction() {
+    char op_code = instReg[0];
+    int R = stoi(instReg.substr(1, 1), nullptr, 16);
+    int XY = stoi(instReg.substr(2, 2), nullptr, 16);
+
+    switch (op_code) {
+        case '1':
+            registers.store(R, memory.load(XY));
+            break;
+        case '2':
+            registers.store(R, hexString(XY));
+            break;
+        case '3':
+            memory.store(XY, registers.load(R));
+            break;
+        case '4':
+            registers.store(XY % 16, registers.load(R));
+            break;
+        case '5': {
+            int sum = hexToInt(registers.load(XY / 16)) + hexToInt(registers.load(XY % 16));
+            registers.store(R, hexString(sum % 256));
+            break;
+        }
+        case '6': {
+            double sum = hexToFloatValue(registers.load(XY / 16)) + hexToFloatValue(registers.load(XY % 16));
+            registers.store(R, FloatToHexadecimal(sum));
+            break;
+        }
+        case 'B':
+            if (registers.load(R) == registers.load(0)) {
+                pc = XY - 2;
+            }
+            break;
+        case 'C':
+            halted = true;
+            break;
+        default:
+            break;
+    }
+}
+
+string CPU::getInstructionRegister() {
+    return instReg;
+}
+
+void CPU::setInstructionRegister() {
+    instReg = "0000";
+}
