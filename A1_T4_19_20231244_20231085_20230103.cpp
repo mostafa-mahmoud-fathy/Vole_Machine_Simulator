@@ -236,9 +236,9 @@ void Simulator::loadProgram(const string &filename) {
         getline(cin, startAddr);
         address = stoi(startAddr, nullptr, 16);
     } else {
-        address = 0x01;
+        address = 1;
     }
-
+    pc = address ;
     while (file >> instruction) {
         if (isValidInstruction(instruction)) {
             instructions.push_back(instruction);
@@ -260,9 +260,6 @@ void Simulator::loadProgram(const string &filename) {
             memory.store(address++, instr.substr(2, 2));
         }
     }
-
-    // Update the program counter to the last address of the instructions
-    pc = address;
 }
 
 void Simulator::run_entire_program() {
