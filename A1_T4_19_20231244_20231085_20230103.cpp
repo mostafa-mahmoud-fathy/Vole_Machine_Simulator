@@ -222,8 +222,22 @@ bool Simulator::isValidInstruction(const string &instruction) {
 void Simulator::loadProgram(const string &filename) {
     ifstream file(filename);
     string instruction;
-    int address = 0;
     vector<string> instructions;
+
+    cout << "Do you want to choose a specific starting point? (y/n)" << endl;
+    char choice;
+    cin >> choice;
+    cin.ignore();
+
+    int address;
+    if (choice == 'y' || choice == 'Y') {
+        cout << "Enter the starting memory address (default is 01):\n";
+        string startAddr;
+        getline(cin, startAddr);
+        address = stoi(startAddr, nullptr, 16);
+    } else {
+        address = 0x01;
+    }
 
     while (file >> instruction) {
         if (isValidInstruction(instruction)) {
@@ -234,14 +248,21 @@ void Simulator::loadProgram(const string &filename) {
     }
     file.close();
 
+    // Ensure there’s a halt instruction if not already provided.
     if (instructions.empty() || instructions.back() != "C000") {
         instructions.push_back("C000");
     }
 
+    // Store instructions in memory starting from the specified address.
     for (const auto &instr : instructions) {
-        memory.store(address++, instr.substr(0, 2));
-        memory.store(address++, instr.substr(2, 2));
+        if (instr.length() >= 4) { // Ensure instruction is long enough
+            memory.store(address++, instr.substr(0, 2));
+            memory.store(address++, instr.substr(2, 2));
+        }
     }
+
+    // Update the program counter to the last address of the instructions
+    pc = address;
 }
 
 void Simulator::run_entire_program() {
@@ -285,4 +306,3 @@ void Simulator::reset() {
     cpu.setInstructionRegister();
     cout << "Simulator reset.\n";
 }
-

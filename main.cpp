@@ -13,7 +13,7 @@ int main() {
         cout << "4. Display current state\n";
         cout << "5. Reset simulator\n";
         cout << "6. Exit\n";
-        cout << "Enter your choice: ";
+        cout << "Enter your choice:\n";
         cin >> choice;
         if (cin.fail()) {
             cin.clear();
