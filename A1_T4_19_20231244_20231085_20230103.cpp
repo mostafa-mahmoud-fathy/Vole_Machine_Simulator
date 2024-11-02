@@ -296,7 +296,7 @@ void Simulator::displayState() {
 }
 
 void Simulator::reset() {
-    pc = 0;
+    pc = 1;
     halted = false;
     memory = Memory();
     registers = Registers();
