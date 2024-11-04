@@ -38,6 +38,11 @@ void Memory::printMemory() {
         cout << endl;
     }
 }
+const string& Memory::getScreen() { return screen; }
+
+void Memory:: setScreen(char c){
+    screen += c ;
+}
 
 // Registers class implementation
 Registers::Registers(size_t count) {
@@ -175,6 +180,11 @@ void CPU::executeInstruction() {
             break;
         case '3':
             memory.store(XY, registers.load(R));
+            if (XY == 0) {
+                int decimalValue = stoi(registers.load(R), nullptr, 16);
+                char asciiChar = static_cast<char>(decimalValue);
+                memory.setScreen(asciiChar) ;
+            }
             break;
         case '4':
             registers.store(XY % 16, registers.load(R));
@@ -292,6 +302,7 @@ void Simulator::displayState() {
     memory.printMemory();
     cout << "PC: " << setw(2) << setfill('0') << hex << uppercase << pc << "\n";
     cout << "IR: " << cpu.getInstructionRegister() << "\n";
+    cout << "Screen output: " << memory.getScreen() << "\n";
     cout << "-----------------------------\n";
 }
 
