@@ -15,11 +15,14 @@ using namespace std;
 class Memory {
 private:
     vector<string> memory;
+    string screen;
 public:
     Memory(size_t size = 256);
     string load(int address);
     void store(int address, const string &hexValue);
     void printMemory();
+    const string& getScreen();
+    void setScreen(char c);
 };
 
 class Registers {
